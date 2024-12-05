@@ -17,11 +17,64 @@ const cam = {
   r: 0
 }
 
+const ball = {
+  x: 0,
+  y: 0,
+  sx: 1,
+  sy: 1,
+  rad: 20,
+  rot: 0,
+  vel: {x: 0, y: 0},
+  speed: 1,
+  gravity: 10,
+  dive: false,
+  diveSpeed: 15,
+  update: function(dt){
+    if (input.KeyS) this.dive = true;
+
+    this.vel.y += this.gravity * dt;
+    if (this.vel.y > this.gravity) this.vel.y = this.gravity;
+
+    if (this.dive) this.vel.y = this.diveSpeed; 
+
+    checkCollision();
+
+    this.vel.x = this.speed;
+
+    this.x += this.vel.x;
+    this.y += this.vel.y;
+
+  },
+  onCollide: function(){
+    this.vel.y = -10;
+  }
+}
+
+const mouse = {
+  x: 0,
+  y: 0
+}
+
+const input = {};
+
 window.onload = () => {
   onResize();
   requestAnimationFrame(firstFrame);
 };
 window.onresize = onResize;
+
+document.body.addEventListener('mousemove', e => {
+  [mouse.x, mouse.y] = worldToScreen(e.clientX, e.clientY);
+});
+
+document.addEventListener('keydown', e => {
+  input[e.code] = true;
+  
+});
+
+document.addEventListener('keyup', e => {
+  input[e.code] = false;
+});
 
 
 function firstFrame()
@@ -49,10 +102,18 @@ function loopCallback(elapsedTime)
   lastTime = elapsedTime;
 }
 
+let animTime = 0;
+let lerpDur = 50;
 function update(dt)
 {
+  ball.update(dt);
+
+  cam.x = lerp(cam.x, ball.x - W / 2, animTime / lerpDur);
+  cam.y = lerp(cam.y, ball.y - H / 2, animTime / lerpDur);
+
+  animTime += 0.01;
   
-  
+  if (animTime > lerpDur) animTime = 0;
 } 
 
 function draw()
@@ -68,6 +129,14 @@ function draw()
     const [x, y] = worldToScreen(p.x, p.y);
     ctx.fillRect(x, y, p.w * cam.sx, p.h * cam.sy);
   }
+
+  // draw ball
+  ctx.fillStyle = "#ff0000";
+  ctx.beginPath();
+  const [x, y] = worldToScreen(ball.x, ball.y);
+  ctx.arc(x, y, ball.rad * ball.sx * cam.sx, 0, 6.28);
+  ctx.fill();
+
 }
 
 function generatePlatform()
@@ -128,4 +197,43 @@ function zoomOut(zx, zy, zf)
 
   cam.x += (preZX - postZX) / cam.sx;
   cam.y += (preZY - postZY) / cam.sy;
+}
+
+function checkCollision()
+{
+
+  const maxY = H / 2 + 200;
+  for (let i = 0; i < platforms.length; i++)
+  {
+    const p = platforms[i];
+    
+    let testX = ball.x;
+    let testY = ball.y;
+
+    if (ball.x < p.x) testX = p.x;
+    else if (ball.x > p.x + p.w) testX = p.x + p.w;
+    if (ball.y < p.y) testY = p.y;
+    else if (ball.y > p.y + p.h) testY = p.y + p.h;
+
+    const dx = testX - ball.x;
+    const dy = testY - ball.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    if (dist <= ball.rad * ball.sx)
+    {
+      ball.onCollide();
+      console.log("collision");
+      return;
+    }
+  }
+
+  if (ball.y > maxY)
+  {
+    console.log("fall")
+  }
+}
+
+function lerp(a, b, t)
+{
+  return a + (b - a) * t;
 }
