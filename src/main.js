@@ -35,7 +35,11 @@ const ball = {
     this.vel.y += this.gravity * dt;
     if (this.vel.y > this.gravity) this.vel.y = this.gravity;
 
-    if (this.dive) this.vel.y = this.diveSpeed; 
+    if (this.dive)
+    {
+      this.vel.y = this.diveSpeed; 
+      this.dive = false;
+    }
 
     checkCollision();
 
