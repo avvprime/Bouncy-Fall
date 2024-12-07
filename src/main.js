@@ -25,21 +25,17 @@ const ball = {
   rad: 20,
   rot: 0,
   vel: {x: 0, y: 0},
-  speed: 1,
+  speed: 2,
   gravity: 10,
   dive: false,
-  diveSpeed: 15,
+  diveSpeed: 25,
   update: function(dt){
     if (input.KeyS) this.dive = true;
 
     this.vel.y += this.gravity * dt;
     if (this.vel.y > this.gravity) this.vel.y = this.gravity;
 
-    if (this.dive)
-    {
-      this.vel.y = this.diveSpeed; 
-      this.dive = false;
-    }
+    if (this.dive) this.vel.y = this.diveSpeed;
 
     checkCollision();
 
@@ -51,6 +47,7 @@ const ball = {
   },
   onCollide: function(){
     this.vel.y = -10;
+    this.dive = false;
   }
 }
 
